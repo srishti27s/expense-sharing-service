@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <title>Expense Split</title>
+    <link rel="stylesheet" href="/static/styles.css?v=6" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Tally home">
+          <span class="brand-mark">t</span>
+          <span><strong>Expense Split</strong><small>group expenses</small></span>
+        </a>
+
+        <div class="side-label">WORKSPACE</div>
+        <nav class="primary-nav" aria-label="Main navigation">
+          <a class="nav-link active" href="#overview" data-view="overview"><span class="nav-icon">⌂</span>Overview</a>
+          <a class="nav-link" href="#expenses" data-view="expenses"><span class="nav-icon">↗</span>Expenses</a>
+          <a class="nav-link" href="#people" data-view="people"><span class="nav-icon">◉</span>People</a>
+        </nav>
+
+        <div class="group-heading"><span class="side-label">YOUR GROUPS</span><button class="icon-button" id="newGroupButton" title="Create a group" aria-label="Create a group">+</button></div>
+        <div id="groupList" class="group-list"></div>
+
+        <div class="sidebar-bottom">
+          <div class="sidebar-note">Local SQLite database</div>
+          <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">API docs <span>↗</span></a>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><span id="crumbGroup">Your groups</span></div>
+          <div class="topbar-right">
+            <select id="mobileGroupSelect" class="mobile-group-select" aria-label="Choose a group"></select>
+            <button class="mobile-new-group" id="mobileNewGroupButton" type="button">+ New group</button>
+            <span class="sync-state" id="syncState" role="status"><i></i><span id="syncLabel">Connecting…</span></span><div class="profile-dot" title="Local workspace">S</div>
+          </div>
+        </header>
+
+        <section class="page-intro">
+          <div>
+            <div class="eyebrow">Group expenses</div>
+            <h1 id="pageTitle">Shared expenses</h1>
+            <p class="intro-copy">Track costs, members, and balances for this group.</p>
+          </div>
+          <div class="page-actions">
+            <button class="button button-quiet" id="deleteGroupButton" type="button">Delete group</button>
+            <button class="button button-primary" id="addExpenseButton"><span class="button-plus">+</span> Add an expense</button>
+          </div>
+        </section>
+
+        <section id="emptyState" class="empty-state" hidden>
+          <p class="eyebrow">GET STARTED</p>
+          <h2>Make your first group.</h2>
+          <p>Trips, flatmates, dinners. Give your shared spending a home.</p>
+          <button class="button button-primary" id="emptyCreateGroup">Create a group</button>
+        </section>
+
+        <div id="dashboard" hidden>
+          <section class="summary-grid" aria-label="Group summary">
+            <article class="summary-card summary-total">
+              <div class="summary-top"><span>Total spent</span></div>
+              <div class="summary-value" id="totalSpent">₹0</div>
+              <div class="summary-foot">Across this group</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-top"><span>Expenses</span></div>
+              <div class="summary-value" id="expenseCount">0</div>
+              <div class="summary-foot">Shared costs recorded</div>
+            </article>
+            <article class="summary-card summary-balance">
+              <div class="summary-top"><span>Net amount to settle</span></div>
+              <div class="summary-value" id="openBalance">₹0</div>
+              <div class="summary-foot">Across everyone in the group</div>
+            </article>
+          </section>
+
+          <section class="content-grid">
+            <article class="panel expense-panel" id="expensesPanel">
+              <div class="panel-heading">
+                <div><p class="eyebrow">EXPENSES</p><h2>Recent expenses</h2></div>
+                <button class="text-button" id="seeExpenses">See all <span>→</span></button>
+              </div>
+              <div id="expenseList" class="expense-list"></div>
+              <div id="noExpenses" class="quiet-empty" hidden><span class="quiet-icon">＋</span><span>No expenses yet. Add the first one when you’re ready.</span></div>
+            </article>
+
+            <div class="right-column">
+              <article class="settle-card">
+                <div class="settle-card-head"><div><p class="eyebrow">BALANCES</p><h2>Settlement suggestions</h2></div></div>
+                <p class="settle-description">Suggested transfers based on each person’s share.</p>
+                <div id="settlementList" class="settlement-list"></div>
+                <div id="noSettlements" class="settled-note" hidden><span>✓</span> Everyone is all square.</div>
+              <div class="settle-foot"><span id="transferCount">0 suggested transfers</span></div>
+              </article>
+
+              <article class="panel people-panel" id="peoplePanel">
+                <div class="panel-heading people-heading"><div><p class="eyebrow">GROUP</p><h2>Members</h2></div><button class="icon-button add-person" id="addMemberButton" title="Add a person" aria-label="Add a person">+</button></div>
+                <div id="memberList" class="member-list"></div>
+                <div id="noMembers" class="quiet-empty compact" hidden><span>Add people to split expenses together.</span></div>
+              </article>
+            </div>
+          </section>
+          <footer class="page-footer"><span>Expense Split · Data stored in the local SQLite database.</span></footer>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="expenseDialog" class="dialog-card">
+      <form id="expenseForm" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">NEW EXPENSE</p><h2>Enter expense details</h2></div><button class="icon-button close-dialog" type="button" data-close="expenseDialog" aria-label="Close">×</button></div>
+        <label>Description<input name="description" placeholder="Dinner, taxi, groceries…" maxlength="240" required /></label>
+        <div class="form-row"><label>Amount in rupees<div class="amount-input"><span>₹</span><input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></div></label><label>Paid by<select name="paid_by" id="payerSelect" required></select></label></div>
+        <label>How should it be split?<select name="split_mode" id="splitMode"><option value="equal">Equally between members</option><option value="custom">Set custom shares</option></select></label>
+        <div id="customSplitFields" class="custom-split-fields" hidden></div>
+        <p class="form-hint" id="splitHint">The total is shared equally among group members.</p>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="expenseDialog">Cancel</button><button class="button button-primary" type="submit">Save expense</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="groupDialog" class="dialog-card small-dialog">
+      <form id="groupForm" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">NEW GROUP</p><h2>Create a group</h2></div><button class="icon-button close-dialog" type="button" data-close="groupDialog" aria-label="Close">×</button></div>
+        <label>Group name<input name="name" placeholder="Weekend in Goa" maxlength="120" required /></label>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="groupDialog">Cancel</button><button class="button button-primary" type="submit">Create group</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="memberDialog" class="dialog-card small-dialog">
+      <form id="memberForm" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">GROUP MEMBERS</p><h2>Add a member</h2></div><button class="icon-button close-dialog" type="button" data-close="memberDialog" aria-label="Close">×</button></div>
+        <label>Choose an existing person<select name="user_id" id="availableUserSelect"></select></label>
+        <p class="form-hint">Adding someone also updates the split for this group’s existing expenses.</p>
+        <label class="new-person-label">Or create a new person<input name="new_name" id="newPersonName" placeholder="Their name" maxlength="120" /></label>
+        <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="memberDialog">Cancel</button><button class="button button-primary" type="submit">Add to group</button></div>
+      </form>
+    </dialog>
+
+    <script src="/static/app.js?v=13" defer></script>
+  </body>
+</html>
