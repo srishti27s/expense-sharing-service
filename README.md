@@ -167,13 +167,5 @@ python -m pytest -q
 
 Tests cover user/group/member management and removal, permanent group deletion, equal and custom expense splits, expense history, balances, paise remainders, validation, membership changes, and settlement suggestions.
 
-## Improvements with more time
 
-- Add recorded settlements, audit history, and idempotency keys for safe retries.
-- Add pagination and filtering to expense history, and authentication/authorization for private groups.
-- Use a migration tool and PostgreSQL for concurrent multi-instance deployment.
-- Add split preview before saving, currency support, and richer reports.
 
-## Interview walkthrough
-
-Start with the core invariant: each expense's shares sum exactly to its amount, and the sum of member net balances is zero. Explain why integer paise avoids floating-point errors, why share snapshots preserve history, and why settlement suggestions derive transfers from net totals instead of storing redundant pairwise debt rows. The tests cover those invariants and important edge cases.
