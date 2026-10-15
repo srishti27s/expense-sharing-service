@@ -17,6 +17,7 @@ All money is stored in integer paise, so there's no floating-point drift.
 Requires Python 3.10+ (3.12 recommended on Windows).
 
 **Windows (PowerShell)**
+
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
@@ -25,6 +26,7 @@ py -3.12 -m venv .venv
 ```
 
 **macOS / Linux**
+
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip setuptools wheel
@@ -33,6 +35,7 @@ python3 -m venv .venv
 ```
 
 **Docker**
+
 ```bash
 docker compose up --build
 ```
@@ -45,52 +48,55 @@ Open http://localhost:8000. The health check is at `/health`. The database is sa
 
 Amounts are in rupees with up to 2 decimals. IDs are integers. Errors follow FastAPI's standard `detail` format.
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/users` | Create a user: `{"name":"Mohit"}` |
-| GET | `/users` | List users |
-| GET | `/workspace?group_id={id}` | One snapshot of users, groups, and the selected group's data |
-| POST | `/groups` | Create a group |
-| DELETE | `/groups/{group_id}` | Delete a group with its members, expenses, and shares |
-| POST | `/groups/{group_id}/members` | Add a member: `{"user_id":2}` |
-| GET | `/groups/{group_id}/members` | List members |
-| DELETE | `/groups/{group_id}/members/{user_id}` | Remove a member (equal splits are recalculated) |
-| POST | `/groups/{group_id}/expenses` | Add an expense |
-| GET | `/groups/{group_id}/expenses` | Expense history |
-| GET | `/groups/{group_id}/balances` | Net balance per member, plus debts |
-| GET | `/groups/{group_id}/settlement-suggestions` | Suggested transfers |
+| Method | Path                                        | Purpose                                                      |
+| ------ | ------------------------------------------- | ------------------------------------------------------------ |
+| POST   | `/users`                                    | Create a user: `{"name":"Mohit"}`                            |
+| GET    | `/users`                                    | List users                                                   |
+| GET    | `/workspace?group_id={id}`                  | One snapshot of users, groups, and the selected group's data |
+| POST   | `/groups`                                   | Create a group                                               |
+| DELETE | `/groups/{group_id}`                        | Delete a group with its members, expenses, and shares        |
+| POST   | `/groups/{group_id}/members`                | Add a member: `{"user_id":2}`                                |
+| GET    | `/groups/{group_id}/members`                | List members                                                 |
+| DELETE | `/groups/{group_id}/members/{user_id}`      | Remove a member (equal splits are recalculated)              |
+| POST   | `/groups/{group_id}/expenses`               | Add an expense                                               |
+| GET    | `/groups/{group_id}/expenses`               | Expense history                                              |
+| GET    | `/groups/{group_id}/balances`               | Net balance per member, plus debts                           |
+| GET    | `/groups/{group_id}/settlement-suggestions` | Suggested transfers                                          |
 
 **Equal split (default)**
+
 ```json
-{"paid_by": 1, "amount": "1200.00", "description": "Dinner"}
+{ "paid_by": 1, "amount": "1200.00", "description": "Dinner" }
 ```
 
 **Custom split.** Shares must add up exactly to the total, and everyone must be a current member.
+
 ```json
 {
   "paid_by": 1,
   "amount": "1000.00",
   "description": "Hotel",
   "splits": [
-    {"user_id": 1, "amount": "500.00"},
-    {"user_id": 2, "amount": "300.00"},
-    {"user_id": 3, "amount": "200.00"}
+    { "user_id": 1, "amount": "500.00" },
+    { "user_id": 2, "amount": "300.00" },
+    { "user_id": 3, "amount": "200.00" }
   ]
 }
 ```
 
 **Balance example** (₹1,200 dinner, 3 members, Mohit paid): a positive net means the person gets money back, a negative net means they owe.
+
 ```json
 {
   "group_id": 1,
   "balances": [
-    {"user_id": 1, "name": "Mohit", "net": 800.0},
-    {"user_id": 2, "name": "Rahul", "net": -400.0},
-    {"user_id": 3, "name": "Ankit", "net": -400.0}
+    { "user_id": 1, "name": "Mohit", "net": 800.0 },
+    { "user_id": 2, "name": "Rahul", "net": -400.0 },
+    { "user_id": 3, "name": "Ankit", "net": -400.0 }
   ],
   "debts": [
-    {"from": "Rahul", "to": "Mohit", "amount": 400.0},
-    {"from": "Ankit", "to": "Mohit", "amount": 400.0}
+    { "from": "Rahul", "to": "Mohit", "amount": 400.0 },
+    { "from": "Ankit", "to": "Mohit", "amount": 400.0 }
   ]
 }
 ```
@@ -130,8 +136,11 @@ Foreign keys are on for every connection. Deleting a group removes its membershi
 
 ## Tests
 
-```bash
 python -m pytest -q
-```
 
 Covers user, group, and member management, group deletion, equal and custom splits, balances, paise remainders, validation, membership changes, and settlement suggestions.
+
+## Improvements with more time
+
+- Add recorded settlements, audit history, and idempotency keys for safe retries.
+- Add pagination and filtering to expense history, and authentication/authorization for private groups.
