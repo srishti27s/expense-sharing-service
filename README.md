@@ -1,6 +1,6 @@
 # Expense Sharing Service
 
-A small FastAPI + SQLite backend for splitting group expenses, built for the Decentro SDE Intern assignment. Add people to a group, log who paid what, and see who owes whom.
+A small FastAPI + SQLite backend for splitting group expenses.
 
 ## What it does
 
